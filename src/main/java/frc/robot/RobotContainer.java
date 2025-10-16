@@ -15,16 +15,10 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.SwerveDrive;
 import frc.robot.commands.AprilTagPositions.LockInReef;
-import frc.robot.commands.ArmPositions.AlgaeProccesor;
-import frc.robot.commands.ArmPositions.AlgeaBarge;
-import frc.robot.commands.ArmPositions.AlgeaL2;
-import frc.robot.commands.ArmPositions.AlgeaL3;
 import frc.robot.commands.ArmPositions.CoralL1;
-import frc.robot.commands.ArmPositions.CoralL2;
-import frc.robot.commands.ArmPositions.CoralL3;
 import frc.robot.commands.ArmPositions.CoralL4;
-import frc.robot.commands.ArmPositions.HumanPlayerStation;
 import frc.robot.commands.ArmPositions.SafeZone;
+import frc.robot.commands.ArmPositions.Stow;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Climber;
@@ -39,6 +33,7 @@ public class RobotContainer {
     public final Intake intake = new Intake();
     public final Arm arm = new Arm();
     public final Elevator elevator = new Elevator();
+
 
     private final CommandXboxController driverController = new CommandXboxController(0);
     private final CommandXboxController operatorController = new CommandXboxController(1);
@@ -61,12 +56,13 @@ public class RobotContainer {
         // NamedCommands.registerCommand("Coral L1", new CoralL1(elevator, arm));
         // NamedCommands.registerCommand("Coral L2", new CoralL2(elevator, arm));
         // NamedCommands.registerCommand("Coral L2", new CoralL3(elevator, arm));
-        // NamedCommands.registerCommand("Coral L4", new CoralL4(elevator, arm));
-        // NamedCommands.registerCommand("Stow", new SafeZone(elevator, arm));
+        NamedCommands.registerCommand("Coral L4", new CoralL4(elevator, arm));
+        NamedCommands.registerCommand("Stow", new CoralL1(elevator, arm));
+        NamedCommands.registerCommand("intake down", intake.run(()->intake.setRotateSpeed(0.1)));
         // NamedCommands.registerCommand("Human Player Station", new HumanPlayerStation(elevator, arm));
 
-        // NamedCommands.registerCommand("Outtake Coral", arm.run(()->arm.setIntakeSpeed(-0.8)));
-        // NamedCommands.registerCommand("Intake Coral", arm.run(()->arm.setIntakeSpeed(0.8)));
+        NamedCommands.registerCommand("Outtake Coral", arm.run(()->arm.setIntakeSpeed(-0.4)));
+        NamedCommands.registerCommand("Intake Coral", arm.run(()->arm.setIntakeSpeed(0.8)));
 
         configureBindings();
 
@@ -91,33 +87,32 @@ public class RobotContainer {
         
     
         /// OPERATOR CONTROLS
-
-        // rotate arm, left trigger == intake, right trigger == outake
-        arm.setDefaultCommand(arm.run(()->arm.manualControl(MathUtil.applyDeadband(operatorController.getRightX(), 0.15), operatorController.leftTrigger(), operatorController.rightTrigger(), operatorController.getLeftTriggerAxis(), operatorController.getRightTriggerAxis())));
+        arm.setDefaultCommand(arm.run(()->arm.manualControl
+        (MathUtil.applyDeadband(-operatorController.getRightX(), 0.15), //rotate arm
+        operatorController.leftTrigger(), //intake = true
+        operatorController.rightTrigger(), //outtake = true
+        operatorController.getLeftTriggerAxis(), //intake
+        operatorController.getRightTriggerAxis()))); //outtake
         
-        // rotate intake, left trigger == intake, right trigger == outake;
         intake.setDefaultCommand(intake.run(()->intake.manualControl(
-            operatorController.leftBumper(), operatorController.rightBumper(), 0.1, operatorController.leftTrigger(), operatorController.rightTrigger(), operatorController.getLeftTriggerAxis(), operatorController.getRightTriggerAxis())));
+            operatorController.leftBumper(), // rotate forward = true
+            operatorController.rightBumper(), //rotate backward = true
+            0.1, // intake rotate speed
+            operatorController.leftTrigger(), // intake = true
+            operatorController.rightTrigger(), // outtake = true
+            operatorController.getLeftTriggerAxis(), //intake
+            operatorController.getRightTriggerAxis()))); //outtake
 
         // //raising and lowering elevator
-        elevator.setDefaultCommand(elevator.run(()->elevator.setElevatorMotorSpeed(eLimiter.calculate(MathUtil.applyDeadband(operatorController.getLeftY(), 0.1)), driverController, operatorController.a(), operatorController.x(), operatorController.y(), operatorController.b())));
+        elevator.setDefaultCommand(elevator.run(()->elevator.setElevatorMotorSpeed(
+            eLimiter.calculate(MathUtil.applyDeadband(operatorController.getLeftY(), 0.1)) // elevator up and down
+            )));
 
-        // //rotate intake up and down
-        // operatorController.leftBumper().onTrue(intake.run(()->intake.setRotateSpeed(0.2)));
-        // operatorController.leftBumper().onFalse(intake.run(()->intake.setRotateSpeed(0)));
-        // operatorController.rightBumper().onTrue(intake.run(()->intake.setRotateSpeed(-0.2)));
-        // operatorController.rightBumper().onFalse(intake.run(()->intake.setRotateSpeed(0)));
+        operatorController.button(8).whileTrue(elevator.runOnce(()->elevator.noStops()));
+        operatorController.button(7).whileTrue(elevator.runOnce(()->elevator.newStop()));
 
-        // //intake from intake
-        // operatorController.povLeft().onTrue(intake.run(()->intake.setIntakeSpeed(0.3)));
-        // operatorController.povLeft().onFalse(intake.run(()->intake.setIntakeSpeed(0)));
-        // operatorController.povRight().onTrue(intake.run(()->intake.setIntakeSpeed(-0.3)));
-        // operatorController.povRight().onFalse(intake.run(()->intake.setIntakeSpeed(0)));
-
-
-        // operatorController.button(7).onTrue(new intakeToArm(arm, intake));
-
-       
+        operatorController.a().onTrue(new Stow(elevator, arm));
+        operatorController.b().onTrue(new SafeZone(elevator, arm));
     }
 
     public CommandXboxController getOperatorJoystick(){

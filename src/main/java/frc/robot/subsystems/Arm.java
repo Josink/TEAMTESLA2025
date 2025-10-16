@@ -107,8 +107,8 @@ public class Arm extends SubsystemBase {
     rw.ReverseSoftLimitEnable = false;
     rw.ReverseSoftLimitThreshold = -7.6;
 
-    talonConfigs.Slot0.kP = 10;
-    talonConfigs.Slot0.kI = 0;
+    talonConfigs.Slot0.kP = 15;
+    talonConfigs.Slot0.kI = 3;
     talonConfigs.Slot0.kD = 0;
     talonConfigs.Slot0.kV = 0;
     talonConfigs.Slot0.kG = 0.29;

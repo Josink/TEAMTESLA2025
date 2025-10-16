@@ -5,14 +5,17 @@
 package frc.robot.commands.ArmPositions;
 
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.Position;
+import frc.robot.commands.ElevatorCommand;
+import frc.robot.commands.rotateArmCommand;
+import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.Elevator;
 
 public class SafeZone extends SequentialCommandGroup {
-  // public SafeZone(Elevator elevator, Arm arm) {
-  //   addCommands(
-  //           new ParallelCommandGroup(
-  //       new ElevatorCommand(elevator, Position.SAFE_ZONE),
-  //       new rotateArmCommand(arm, Position.SAFE_ZONE)
-  //     )
-  //   );
-  // }
+  public SafeZone(Elevator elevator, Arm arm) {
+    addCommands(
+        new ElevatorCommand(elevator, Position.SAFE_ZONE),
+        new rotateArmCommand(arm, Position.SAFE_ZONE)
+    );
+  }
 }
